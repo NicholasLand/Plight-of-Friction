@@ -1,24 +1,9 @@
 
-# Nicholas Land 2 hour project
+# Nicholas Land / land.nicholas@outlook.com
 # 10/5/2018
 # Plight of friction
 
-
-# EX: mainChar = [name, element, class, level, attack, defense, health, mana, luck]
-# Warrior starts out with good attack/def alright health low mana and next to low luck
-
-
-# /////WORK LOG\\\\\:
-# 10/24/2018: Added the while loop feature menu thing
-# 11/7/2018: Added basic combat features
-# 11/12/2018
-
-# /////SHIT TO WORK ON\\\\\:
-# add different abilities for the classes and factions
-# figure out what the hell is going on with the combat sim, when i tried refactoring it
-# --it went on it's dumb shit again with the going past 0 health, but the old version works
-# add shop feature with gold currency
-
+#TODO add more spells in ability selection and add them into level up function
 
 import random
 import json
@@ -482,17 +467,55 @@ def convertFromListToDictEnemy(enemyCharList, enemyCharDict):
     enemyCharDict['stats']['health'] = enemyCharList[6]
     enemyCharDict['stats']['mana'] = enemyCharList[7]
     enemyCharDict['stats']['luck'] = enemyCharList[8]
-    enemyCharDict['stats']['xp'] = 10
+    enemyCharDict['stats']['xp'] = enemyCharList[9]
+    enemyCharDict['stats']['gold'] = enemyCharDict['stats']['xp'] * 2
 def statDisplay(mainCharDict):
-    print("\n\nStats for: ",mainCharDict['stats']['name'])
-    print(mainCharDict['stats']['name'] + "'s clan element is ", mainCharDict['stats']['clan'])
-    print(mainCharDict['stats']['name'] + "'s class is: ", mainCharDict['stats']['class'])
-    print(mainCharDict['stats']['name'] + "'s level is: ", mainCharDict['stats']['level'])
-    print(mainCharDict['stats']['name'] + "'s attack is: ", mainCharDict['stats']['attack'])
-    print(mainCharDict['stats']['name'] + "'s defense is: ", mainCharDict['stats']['defense'])
-    print(mainCharDict['stats']['name'] + "'s health is: ", mainCharDict['stats']['health'])
-    print(mainCharDict['stats']['name'] + "'s mana is: ", mainCharDict['stats']['mana'])
-    print(mainCharDict['stats']['name'] + "'s critical strike chance is:", mainCharDict['stats']['luck'], "%\n\n")
+    if(len(mainCharDict['stats']) < 5):
+        print("You have no character on file, please load your character or create a new one")
+        return 0
+
+    trigger = False
+    while( trigger == False):
+        print("\nEnter 1 to look at character stats")
+        print("Enter 2 to look at inventory")
+        print("Enter 3 to look at your abilities")
+        statChoice = int(input("Enter your choice:"))
+
+        while( not( 1<=statChoice<=3)):
+            print("Input not understood.")
+            statChoice = int(input("Please enter a valid number"))
+
+        if( statChoice == 1):
+            print("\n\nStats for: ",mainCharDict['stats']['name'])
+            print("clan:\t\t\t\t", mainCharDict['stats']['clan'])
+            print("class:\t\t\t\t", mainCharDict['stats']['class'])
+            print("level:\t\t\t\t", mainCharDict['stats']['level'])
+            print("attack:\t\t\t\t", mainCharDict['stats']['attack'])
+            print("defense:\t\t\t", mainCharDict['stats']['defense'])
+            print("health:\t\t\t\t", mainCharDict['stats']['health'])
+            print("mana:\t\t\t\t", mainCharDict['stats']['mana'])
+            print("critical strike:\t", mainCharDict['stats']['luck'], "%\n\n")
+
+        if( statChoice == 2):
+            print("\nYour inventory:")
+            for i in mainCharDict['inventory']:
+                print(i, mainCharDict['inventory'][i])
+                print()
+
+        if( statChoice == 3):
+            print("Your abilities:")
+            for i in mainCharDict['abilities']:
+                print(mainCharDict['abilities'][i]['name'])
+                print("mana cost:", mainCharDict['abilities'][i]['mana'])
+                print("description:",mainCharDict['abilities'][i]['description'])
+                print()
+
+
+
+        exit = input("Do you want to look at anymore details about your character?(Enter yes or no):")
+
+        if(exit == "no"):
+            trigger = True
 def warningForCharCreation():
     print("\n\n\n***WARNING*** if you have a previously saved file on this game then creating a new character will delete it")
     print("Enter 0 if you wish to go back to the main menu")
@@ -506,14 +529,64 @@ def warningForCharCreation():
 
     else:
         return True
+def getHealth(mainCharDict):
+    charClass = mainCharDict['stats']['class']
+    charLevel = mainCharDict['stats']['level']
+    health = 0
+
+    if(charClass == "warrior"):
+        health == 200
+
+    elif(charClass == "assassin"):
+        health = 120
+
+    else:
+        health = 150
+
+    if(charLevel == 1):
+        return int(health)
+
+    else:
+        for i in range(charLevel-1):
+            health*= 1.3
+        return int(health)
+def getMana(mainCharDict):
+    charClass = mainCharDict['stats']['class']
+    charLevel = mainCharDict['stats']['level']
+    mana = 0
+
+    if(charClass == "warrior"):
+        mana == 100
+
+    elif(charClass == "assassin"):
+        mana = 150
+
+    else:
+        mana = 220
+
+    if(charLevel == 1):
+        return int(mana)
+
+    else:
+        for i in range(charLevel-1):
+            mana*= 1.3
+        return int(mana)
+
 
 # COMBAT MECHANICS
 def combatSim(mainCharDict, enemyDict):
     mainCharName = mainCharDict['stats']['name']
     mainCharHealth = mainCharDict['stats']['health']
+    mainCharMana = mainCharDict['stats']['mana']
+    healthPot = mainCharDict['inventory'].get('health potion', -1)
+    manaPot = mainCharDict['inventory'].get('mana potion', -1)
 
     enemyName = enemyDict['stats']['name']
     enemyHealth = enemyDict['stats']['health']
+    enemyMana = enemyDict['stats']['mana']
+
+
+
 
 
     print("You are now fighting", enemyName,"starting out with", enemyHealth,"health")
@@ -531,32 +604,129 @@ def combatSim(mainCharDict, enemyDict):
 
         print("\nEnter 1 to do a basic attack")
         print("Enter 2 to do a special ability")
-        print("Enter 3 to use a health potion")
-        print("Enter 4 to use a mana potion")
-        print("Enter 5 to run like a loser")
+        print("Enter 3 to look at stats and inventory")
+        print("Enter 4 to use a health potion")
+        print("Enter 5 to use a mana potion")
+        print("Enter 6 to run like a loser")
+        print("Your mana is: ", mainCharMana,"\n\n")
 
         userChoice = int(input("Your choice is: "))
 
-        if (userChoice == 1):
+        if ( userChoice == 1 ):
             print(mainCharName, "uses a normal attack!")
-            mainAttack = attackWithCrit(mainCharDict)
-            enemyDict['stats']['health'] = enemyDict['stats']['health'] - mainAttack
+            attack = attackWithCrit(mainCharDict)
+            mainAttack = attackWithDef(attack, enemyDict)
+            enemyHealth = enemyHealth - mainAttack
             print(mainCharName, "has attacked the enemy for", mainAttack, "damage!")
-            print("The enemy has", enemyDict['stats']['health'], "health left! \n\n\n")
+            print("The enemy has", enemyHealth, "health left! \n\n")
 
-            print(enemyDict['stats']['name'] + " uses basic attack!")
+            print(enemyName + " uses basic attack!")
             enemyAttack = attackWithCrit(enemyDict)
-            mainCharHealth = mainCharHealth - enemyAttack
-            print(enemyName, "has attacked", mainCharName, "for", enemyAttack, "damage!")
-            print(mainCharName + "has", mainCharHealth, "health left! \n\n\n")
+            enemyMainAttack = attackWithDef(enemyAttack, mainCharDict)
+            mainCharHealth = mainCharHealth - enemyMainAttack
+            print(enemyName, "has attacked", mainCharName, "for", enemyMainAttack, "damage!")
+            print(mainCharName + " has", mainCharHealth, "health left! \n\n")
 
-        if (enemyDict['stats']['health'] <= 0):
+
+        if ( userChoice == 2 ):
+            moveResult = abilitySelection(mainCharDict)
+
+            moveName = moveResult[0]
+            moveDamage = moveResult[1]
+            moveMana = moveResult[2]
+            moveCondition = moveResult[3]
+            changeInEnemyAtk = moveResult[4]
+            changeInEnemyDef = moveResult[5]
+            changeInMainAtk = moveResult[6]
+            changeInMainDef = moveResult[7]
+
+            if( mainCharMana > moveMana ):
+                mainCharMana = mainCharMana - moveMana
+                mainAttack = attackWithDef(moveDamage,enemyDict)
+                enemyHealth = enemyHealth - mainAttack
+                print(mainCharName, "has used", moveName, "for", mainAttack, "!")
+
+                if(moveCondition == "stun"):
+                    print(enemyName, "is now stunned! It cannot attack!")
+                    print("... \nIt finally woke up!")
+
+                else:
+                    attack = attackWithCrit(enemyDict)
+                    enemyAttack = attackWithDef(attack, mainCharDict)
+                    print(enemyName, "uses normal attack for", enemyAttack, "!")
+                    mainCharHealth = mainCharHealth - enemyAttack
+                    print(mainCharName + " has", mainCharHealth, "health left! \n\n")
+
+                print("The enemy now has", enemyHealth, "health!\n\n")
+
+            else:
+                print("You don't have enough mana! If you have mana potions drink them!")
+
+
+        if( userChoice == 3 ):
+                statDisplay(mainCharDict)
+
+
+        if( userChoice == 4 ):
+            maxHealth = getHealth(mainCharDict)
+
+            if( healthPot <= 0 ):
+                print("You don't have any health potions in your inventory!")
+
+            elif( healthPot > 0 ):
+                if (maxHealth == mainCharHealth):
+                    print("You're already at full health!")
+
+                else:
+                    mainCharDict['inventory']['health potion'] = mainCharDict['inventory']['health potion'] - 1
+                    mainCharHealth += 50
+                    amountHealed = 50
+
+                    if( mainCharHealth > maxHealth ):
+                        amountHealed = ((mainCharHealth - maxHealth) - 50) * -1
+                        mainCharHealth = maxHealth
+
+
+                    print("You've been healed for", amountHealed, "health, your health is now", mainCharHealth)
+
+
+
+        if( userChoice == 5 ):
+                maxMana = getMana(mainCharDict)
+
+                if (manaPot <= 0):
+                    print("You don't have any mana potions in your inventory!")
+
+                elif (manaPot > 0):
+                    if (maxMana == mainCharMana):
+                        print("You're already at full mana!")
+
+                    else:
+                        mainCharDict['inventory']['mana potion'] = mainCharDict['inventory']['mana potion'] - 1
+                        mainCharMana += 50
+                        amountHealed = 50
+
+                        if (mainCharMana > maxMana):
+                            amountHealed = ((mainCharMana - maxMana) - 50) * -1
+                            mainCharMana = maxMana
+
+                        print(amountHealed, "mana was restored! You now have", mainCharMana, "mana")
+
+
+        if( userChoice == 6 ):
+                print("You run away from the enemy and cower in fear")
+                trigger == True
+
+
+        if (enemyHealth <= 0):
             print(enemyName + " has been defeated!")
-            mainCharDict['stats']['xp']+=enemyDict['stats']['xp']
+            mainCharDict['stats']['xp'] += enemyDict['stats']['xp']
+            mainCharDict['stats']['health'] = mainCharHealth
             trigger = True
 
         if (mainCharHealth <= 0):
             print(mainCharName + " has been defeated!")
+            mainCharDict['stats']['health'] = mainCharHealth
             trigger = True
 
 
@@ -566,18 +736,129 @@ def combatSim(mainCharDict, enemyDict):
         print("You now start of back alive with 60hp, please be more prepared as you go into dungeons")
         mainCharDict['stats']['health'] = 60
 
+    mainCharDict['stats']['health'] = mainCharHealth
+    mainCharDict['stats']['mana'] = mainCharMana
+
     levelUp(mainCharDict)
     save(mainCharDict)
-def attackWithCrit(mainCharDict):
+def attackWithCrit(aCharDict):
 
     # only use the mainCharDict as the parameter because the function takes care of the rest
     crit = random.randint(0,100)
 
-    if(mainCharDict['stats']['luck'] >= crit):
+    if(aCharDict['stats']['luck'] >= crit):
         print("CRITICAL STRIKE!")
-        return mainCharDict['stats']['attack']*2
+        return aCharDict['stats']['attack']*2
     else:
-        return mainCharDict['stats']['attack']
+        return aCharDict['stats']['attack']
+def attackWithDef(attack, aCharDict):
+    difference = attack * aCharDict['stats']['defense']
+    return int(attack - difference)
+def abilitySelection(aCharDict):
+    spells = aCharDict['abilities']
+
+    abilities = []
+    num = 1
+
+    print("\nYour Spells:")
+    for i in spells:
+        print("\nEnter", num, "for:", i.upper())
+        print("Info:")
+        print(spells[i]['mana'], "mana cost")
+        print("Description:", spells[i]['description'])
+        abilities.append(i)
+        num+=1
+
+    abilityChoice = int(input("Please enter your choice: "))
+
+    while(not(1<=abilityChoice<=len(abilities))):
+        print("Your choice is not in your ability range")
+        abilityChoice = int(input("Please enter your choice: "))
+
+    abilitySelection = abilities[abilityChoice-1]
+
+    print("You chose:", abilitySelection)
+
+    return abilityList(abilitySelection,aCharDict)
+def abilityList(selectedMove, aCharDict):
+    aList = []
+
+    attack = aCharDict['stats']['attack']
+    defense = aCharDict['stats']['defense']
+
+    selectedMove.lower()
+
+    # Warrior Spells: crush lvl 1, smash lvl 2
+    # Assassin Spells: gouge lvl 1, cheap shot lvl 2
+    # Sorcerer Spells: energy blast lvl 1, magic bind lvl 2
+
+
+
+    if(selectedMove == "crush"):
+        aList.append("Crush")
+        aList.append(float(attack * 1.5))           # damage
+        aList.append(50)                            # mana
+        aList.append("none")                        # enemy condition
+        aList.append(0)                             # enemy ATK changes
+        aList.append(0)                             # enemy DEF changes
+        aList.append(0)                             # main ATK changes
+        aList.append(0)                             # main DEF changes
+        return aList
+
+    elif(selectedMove == "gouge"):
+        aList.append("Gouge")
+        aList.append(float(attack * 1.5))
+        aList.append(50)
+        aList.append("none")
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        return aList
+
+    elif(selectedMove == "energyBlast"):
+        aList.append("Energy Blast")
+        aList.append(float(attack * 1.7))
+        aList.append(50)
+        aList.append("none")
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        return aList
+                                                    # lvl 2 abilities
+    elif(selectedMove == "smash"):
+        aList.append("Smash")
+        aList.append(float(attack* 1.5))
+        aList.append(60)
+        aList.append("stun")
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        return aList
+
+    elif(selectedMove == "shadowStep"):
+        aList.append("Shadow Step")
+        aList.append(float(attack * 1.5))
+        aList.append(60)
+        aList.append("stun")
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        return aList
+
+    elif(selectedMove == "magic bind"):
+        aList.append("Magic Bind")
+        aList.append(float(attack * 1.5))
+        aList.append(60)
+        aList.append("stun")
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        aList.append(0)
+        return aList
 
 # LEVEL MECHANICS
 def caveSelection(mainCharDict):
@@ -640,6 +921,7 @@ def shallowCaveFight(mainCharDict):
         enemyList.append(80)  # health
         enemyList.append(100)  # mana
         enemyList.append(5)  # luck
+        enemyList.append(10) # xp
 
     if (enemyList[2] == "assassin"):
         enemyList.append(1)  # level
@@ -648,6 +930,7 @@ def shallowCaveFight(mainCharDict):
         enemyList.append(60)  # health
         enemyList.append(100)  # mana
         enemyList.append(15)  # luck
+        enemyList.append(10)  # xp
 
     if (enemyList[2] == "sorcerer"):
         enemyList.append(1)  # level
@@ -656,6 +939,7 @@ def shallowCaveFight(mainCharDict):
         enemyList.append(70)  # health
         enemyList.append(100)  # mana
         enemyList.append(5)  # luck
+        enemyList.append(10) # xp
 
     enemyCharDict = {'stats': {},'inventory': {}, "moves": {}}
 
@@ -663,19 +947,187 @@ def shallowCaveFight(mainCharDict):
 
     combatSim(mainCharDict,enemyCharDict)
 def averageCaveFight(mainCharDict):
-    print("This is an average cave fight")
-    print(mainCharDict)
+    print("This is your average cave fight")
+
+    randEnemyElementPool = []
+    randEnemyClassPool = ["warrior", "assassin", "sorcerer"]
+
+    enemyList = []
+
+    if (mainCharDict['stats']['clan'] == "water"):
+        randEnemyElementPool.append("fire")
+        randEnemyElementPool.append("forest")
+
+    elif (mainCharDict['stats']['clan'] == "fire"):
+        randEnemyElementPool.append("forest")
+        randEnemyElementPool.append("water")
+
+    else:
+        randEnemyElementPool.append("water")
+        randEnemyElementPool.append("fire")
+
+    classDecider = random.randint(0, 2)
+
+    elementDecider = random.randint(0, 1)
+
+    enemyList.append("Average Enemy")
+
+    enemyList.append(randEnemyElementPool[elementDecider])
+
+    enemyList.append(randEnemyClassPool[classDecider])
+
+    if (enemyList[2] == "warrior"):
+        enemyList.append(5)     # level
+        enemyList.append(18)    # attack
+        enemyList.append(.5)    # defense
+        enemyList.append(170)   # health
+        enemyList.append(100)   # mana
+        enemyList.append(5)     # luck
+        enemyList.append(40)    # xp
+
+    if (enemyList[2] == "assassin"):
+        enemyList.append(1)     # level
+        enemyList.append(14)    # attack
+        enemyList.append(.3)    # defense
+        enemyList.append(145)   # health
+        enemyList.append(100)   # mana
+        enemyList.append(15)    # luck
+        enemyList.append(40)    # xp
+
+    if (enemyList[2] == "sorcerer"):
+        enemyList.append(1)     # level
+        enemyList.append(16)    # attack
+        enemyList.append(.5)    # defense
+        enemyList.append(160)   # health
+        enemyList.append(100)   # mana
+        enemyList.append(5)     # luck
+        enemyList.append(40)    # xp
+
+
+    enemyCharDict = {'stats': {},'inventory': {}, "abilities": {}}
+    convertFromListToDictEnemy(enemyList,enemyCharDict)
+    combatSim(mainCharDict,enemyCharDict)
 def deepCaveFight(mainCharDict):
     print("This is a deep cave fight")
-    print(mainCharDict)
 
+    randEnemyElementPool = []
+    randEnemyClassPool = ["warrior", "assassin", "sorcerer"]
 
+    enemyList = []
 
+    if (mainCharDict['stats']['clan'] == "water"):
+        randEnemyElementPool.append("fire")
+        randEnemyElementPool.append("forest")
 
+    elif (mainCharDict['stats']['clan'] == "fire"):
+        randEnemyElementPool.append("forest")
+        randEnemyElementPool.append("water")
 
+    else:
+        randEnemyElementPool.append("water")
+        randEnemyElementPool.append("fire")
+
+    classDecider = random.randint(0, 2)
+
+    elementDecider = random.randint(0, 1)
+
+    enemyList.append("HUGE Enemy")
+
+    enemyList.append(randEnemyElementPool[elementDecider])
+
+    enemyList.append(randEnemyClassPool[classDecider])
+
+    if (enemyList[2] == "warrior"):
+        enemyList.append(5)  # level
+        enemyList.append(28)  # attack
+        enemyList.append(.5)  # defense
+        enemyList.append(300)  # health
+        enemyList.append(100)  # mana
+        enemyList.append(5)  # luck
+        enemyList.append(60)  # xp
+
+    if (enemyList[2] == "assassin"):
+        enemyList.append(1)  # level
+        enemyList.append(23)  # attack
+        enemyList.append(.3)  # defense
+        enemyList.append(250)  # health
+        enemyList.append(100)  # mana
+        enemyList.append(25)  # luck
+        enemyList.append(60)  # xp
+
+    if (enemyList[2] == "sorcerer"):
+        enemyList.append(1)  # level
+        enemyList.append(25)  # attack
+        enemyList.append(.5)  # defense
+        enemyList.append(280)  # health
+        enemyList.append(100)  # mana
+        enemyList.append(5)  # luck
+        enemyList.append(60)  # xp
+
+    enemyCharDict = {'stats': {}, 'inventory': {}, "abilities": {}}
+    convertFromListToDictEnemy(enemyList, enemyCharDict)
+    combatSim(mainCharDict, enemyCharDict)
+def shop(mainCharDict):
+    print("**You walk into a dusty old shop, behind the counter sits an old store owner**")
+    print("Hello traveller, I am the potion seller, please take a look at my wares\n")
+
+    currentGold = mainCharDict['inventory']['gold']
+    inventory = mainCharDict['inventory']
+    print("You currently have", currentGold, "gold")
+
+    shopDict = {"items": {"health potion": {"name": "health potion", "cost": 15},
+                          "mana potion": {"name": "mana potion", "cost": 10}}}
+
+    num = 1
+    shopList = []
+
+    print("Shop inventory:\n")
+    for i in shopDict['items']:
+        print("Enter", num, "for:")
+        print(shopDict['items'][i]['name'])
+        print("cost:", shopDict['items'][i]['cost'], "gold\n")
+        shopList.append(shopDict['items'][i]['name'])
+        num += 1
+
+    itemIndex = int(input("Enter the item # of what you would like to buy: "))
+
+    while (not (1 <= itemIndex <= len(shopList))):
+        print("I'm sorry we don't have that item in stock, please enter a valid item #")
+        itemIndex = int(input("Enter the item # of what you would like to buy: "))
+
+    selectedItem = shopList[itemIndex - 1]
+    selectedItemPrice = shopDict['items'][selectedItem]['cost']
+
+    print("You chose", selectedItem)
+
+    itemQuantity = int(input("How many " + selectedItem + "'s would you like? (Enter number amount)"))
+
+    transactionTotal = itemQuantity * selectedItemPrice
+
+    print("The total for your", itemQuantity, selectedItem + "(s) is", transactionTotal, "gold")
+
+    buyDecision = input("Would you like to finalize this transaction? (Enter yes or no)")
+
+    if (buyDecision == "yes"):
+
+        if (currentGold >= transactionTotal):
+            currentGold = currentGold - transactionTotal
+            print("\nGood deal! Enjoy your items!")
+            print("You have", currentGold, " gold left")
+            inventory.update({selectedItem: itemQuantity})
+            currentGold = mainCharDict['inventory']['gold']
+
+        if (currentGold < transactionTotal):
+            print("\nWell dang traveller, looks like you don't have enough cheddar...")
+            print("Come back next time with enough dough and maybe we'll talk then")
+
+    else:
+        print("Alright, then get the hell out of my shop and come back when you want to buy something")
+
+    print("Here's your inventory:", inventory)
+    save(mainCharDict)
 def main():
     endGame = True
-
 
     while( endGame != False):
         print("\n")
@@ -699,7 +1151,6 @@ def main():
             endGame = False
 
 
-
         # create a new character
         if(userControl == "1"):
             if(warningForCharCreation()):
@@ -712,7 +1163,6 @@ def main():
         # load character
         if(userControl == "2"):
             load(mainChar)
-            statDisplay(mainChar)
 
 
         # cave selection to go into combat
@@ -722,8 +1172,7 @@ def main():
 
         # go to shop
         if(userControl == "4"):
-            return 0
-            # need to create shop
+            shop(mainChar)
 
 
         # look at stats on character
